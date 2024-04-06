@@ -1,7 +1,7 @@
 import { Server, ServerWebSocket } from "bun";
 import { db } from "../db/database";
 import { WebSocketData, WebSocketMsg } from "../Types";
-import { addMsgToDb } from "../db/wsMessages";
+import { addMsgToDb, getReceiverId } from "../db/wsMessages";
 
 export async function getConversationID(id1: number, id2: number): Promise<string | null> {
     try {
@@ -68,19 +68,20 @@ export async function wsMessageHandler(ws: ServerWebSocket<WebSocketData>, serve
 
         switch (msg.type) {
             case 'message':
-                const { id, message } = msg.payload as { id: number, message: string };
-                await wsConversationMessageHandler(ws, server, id, message);
+                const { recipient, message } = msg.payload as { recipient: string, message: string };
+                await wsConversationMessageHandler(ws, server, recipient, message);
                 break;
         }
     }
 }
 
-export async function wsConversationMessageHandler(ws: ServerWebSocket<WebSocketData>, server: Server, id: number, message: string) {
-    let conversation = await getConversationID(ws.data.userId, id);
+export async function wsConversationMessageHandler(ws: ServerWebSocket<WebSocketData>, server: Server, recipientUsername: string, message: string) {
+    const receiverId = await getReceiverId(recipientUsername);
+    let conversation = await getConversationID(ws.data.userId, receiverId);
 
     if (conversation === null) {
         console.log("Creating conversation");
-        conversation = await createConversation(ws.data.userId, id);
+        conversation = await createConversation(ws.data.userId, receiverId);
     }
 
     server.publish(conversation, message);

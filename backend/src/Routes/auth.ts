@@ -49,6 +49,7 @@ auth.post(
 auth.post('/login', async (c) => {
     try {
         const { username, password } = await c.req.json();
+        console.log(username, password);
 
         if (!username || !password) {
             return c.json({
