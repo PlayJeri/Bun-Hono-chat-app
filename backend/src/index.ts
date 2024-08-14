@@ -9,7 +9,12 @@ import { chat } from "./Routes/chat";
 
 const app = new Hono<{ Variables: ContextVariables }>();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");
