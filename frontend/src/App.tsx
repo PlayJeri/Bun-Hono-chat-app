@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useAuthContext } from "./contexts/authContext";
 import "./App.css";
 
 function App() {
   const [count, setCount] = useState(0);
+  const authContext = useAuthContext();
 
   return (
     <div className="h-screen w-screen flex items-center justify-center">
@@ -14,6 +16,10 @@ function App() {
         >
           {count}
         </button>
+        <button onClick={() => authContext.login("IsoMies", "isomolc")}>
+          Login
+        </button>
+        <p>{authContext.user ? authContext.user.username : "not logged in"}</p>
       </div>
     </div>
   );
