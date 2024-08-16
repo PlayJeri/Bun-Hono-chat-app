@@ -1,10 +1,4 @@
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { ReactNode, createContext, useState } from "react";
 import { loginUser } from "../helpers/authProvider";
 
 interface User {
@@ -12,45 +6,38 @@ interface User {
   id: string;
 }
 
-interface UserAuth {
-  isLoggedIn: boolean;
-  user: User | null;
+export interface UserAuth {
+  user: User | undefined;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
 }
 
-const AuthContext = createContext<UserAuth>({} as UserAuth);
-
-export const useAuthContext = () => useContext(AuthContext);
+export const AuthContext = createContext<UserAuth | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | undefined>(undefined);
 
-  useEffect(() => {
-    console.log("MORO MORO USEEFFECTILT");
-  }, []);
-
-  // Function to log in a user
   const login = async (username: string, password: string) => {
-    const data = await loginUser(username, password);
-    if (!data) {
-      console.log("LOLLERO");
-      return;
+    console.log("Log in");
+    try {
+      const data = await loginUser(username, password);
+      if (!data) {
+        return;
+      }
+      setUser(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Login error:", error);
     }
-    setUser(data);
-    console.log(data);
   };
 
-  // Function to log out a user
-  const logout = async () => {
-    window.location.reload(); // Refresh the page after logout
+  const logout = () => {
+    console.log("Log out");
+    setUser(undefined);
   };
 
-  // Create the context value to provide to the context consumers
   const contextValue = {
     user,
-    isLoggedIn,
     login,
     logout,
   };

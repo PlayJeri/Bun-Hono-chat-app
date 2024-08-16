@@ -6,46 +6,55 @@ import { DbUser } from "../db/types";
 import { setCookie, setSignedCookie } from "hono/cookie";
 import { sign } from "hono/jwt";
 import { DecodedPayload } from "../Types";
+import { validator } from "hono/validator";
 
 const secretKey = process.env.TOKEN_SECRET || "secret";
 
 const auth = new Hono();
 
-auth.post("/register", zValidator("json", RegisterSchema), async (c) => {
-  try {
-    const { username, password } = c.req.valid("json");
+auth.post(
+  "/register",
+  validator("json", async (value, c) => {
+    try {
+      const parsed = RegisterSchema.safeParse(value);
+      if (!parsed.success) {
+        return c.status(400);
+      }
 
-    const query = db.query(
-      "SELECT username FROM users WHERE username = $param;"
-    );
-    const user = query.values(username);
+      const { username, password } = parsed.data;
 
-    if (user.length > 0) {
+      const query = db.query(
+        "SELECT username FROM users WHERE username = $param;"
+      );
+      const user = query.values(username);
+
+      if (user.length > 0) {
+        return c.json(
+          {
+            message: "Username already exists",
+          },
+          400
+        );
+      }
+
+      const hashedPassword = await Bun.password.hash(password);
+
+      const insert = db.query(
+        "INSERT INTO users (username, password) VALUES($username, $password);"
+      );
+      insert.run(username, hashedPassword);
+
       return c.json(
         {
-          message: "Username already exists",
+          message: `Registered! ${username}`,
         },
-        400
+        201
       );
+    } catch (error) {
+      return c.text("Internal Server Error", 500);
     }
-
-    const hashedPassword = await Bun.password.hash(password);
-
-    const insert = db.query(
-      "INSERT INTO users (username, password) VALUES($username, $password);"
-    );
-    insert.run(username, hashedPassword);
-
-    return c.json(
-      {
-        message: `Registered! ${username}`,
-      },
-      201
-    );
-  } catch (error) {
-    return c.text("Internal Server Error", 500);
-  }
-});
+  })
+);
 
 auth.post("/login", async (c) => {
   try {

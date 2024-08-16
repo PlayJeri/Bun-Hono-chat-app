@@ -3,7 +3,6 @@ import { ContextVariables, WebSocketData } from "../Types";
 import { subscribeToConversations, wsMessageHandler } from ".";
 import { serve, Server } from "bun";
 import { Hono } from "hono";
-import { getSignedCookie } from "hono/cookie";
 import { getWebSocketDataFromCookies } from "../helpers/cookieHelper";
 
 const environment = process.env.ENV;
@@ -28,6 +27,7 @@ export class WebSocketHandler {
 
   async fetch(req: Request, server: Server) {
     if (req.headers.get("upgrade") === "websocket") {
+      console.log("upgrade attempt");
       let name: string;
       let id: number;
 
@@ -35,8 +35,9 @@ export class WebSocketHandler {
         const username = req.headers.get("username");
         const userId = req.headers.get("userId");
 
-        if (!username || !userId)
+        if (!username || !userId) {
           return new Response("missing user info", { status: 400 });
+        }
 
         name = username;
         id = parseInt(userId);
