@@ -7,17 +7,22 @@ import {
 import { ServerWebSocket, WebSocketHandler } from "bun";
 import { subscribeToConversations } from "./messageHandlers";
 import { server } from "..";
+import { currentUsersMap } from "./currentUsers";
 
 export const websocket: WebSocketHandler<WebSocketData> = {
 	open(ws) {
 		console.log("WebSocket connection opened");
 		ws.send("Welcome to the WebSocket server!");
+		const { userId, username } = ws.data;
 		subscribeToConversations(ws);
+		currentUsersMap.set(userId, { username, id: userId, ws });
 	},
 	message(ws, message) {
 		wsMessageHandler(ws, message);
 	},
 	close(ws) {
+		const { userId } = ws.data;
+		currentUsersMap.delete(userId);
 		console.log("WebSocket connection closed");
 	},
 };
