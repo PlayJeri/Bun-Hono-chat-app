@@ -7,121 +7,125 @@ import { setCookie, setSignedCookie } from "hono/cookie";
 import { sign } from "hono/jwt";
 import { DecodedPayload } from "../Types";
 import { validator } from "hono/validator";
+import { user } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 const secretKey = process.env.TOKEN_SECRET || "secret";
 
 const auth = new Hono();
 
 auth.post(
-  "/register",
-  validator("json", async (value, c) => {
-    try {
-      const parsed = RegisterSchema.safeParse(value);
-      if (!parsed.success) {
-        return c.status(400);
-      }
+	"/register",
+	validator("json", async (value, c) => {
+		try {
+			const parsed = RegisterSchema.safeParse(value);
+			if (!parsed.success) {
+				return c.status(400);
+			}
 
-      const { username, password } = parsed.data;
+			const { username, password } = parsed.data;
 
-      const query = db.query(
-        "SELECT username FROM users WHERE username = $param;"
-      );
-      const user = query.values(username);
+			const users = await db
+				.select()
+				.from(user)
+				.where(eq(user.username, username));
 
-      if (user.length > 0) {
-        return c.json(
-          {
-            message: "Username already exists",
-          },
-          400
-        );
-      }
+			if (users.length !== 0) {
+				return c.json(
+					{
+						message: "Username already exists",
+					},
+					400
+				);
+			}
 
-      const hashedPassword = await Bun.password.hash(password);
+			const hashedPassword = await Bun.password.hash(password);
 
-      const insert = db.query(
-        "INSERT INTO users (username, password) VALUES($username, $password);"
-      );
-      insert.run(username, hashedPassword);
+			await db
+				.insert(user)
+				.values({ username: username, password: hashedPassword });
 
-      return c.json(
-        {
-          message: `Registered! ${username}`,
-        },
-        201
-      );
-    } catch (error) {
-      return c.text("Internal Server Error", 500);
-    }
-  })
+			return c.json(
+				{
+					message: `Registered! ${username}`,
+				},
+				201
+			);
+		} catch (error) {
+			return c.text("Internal Server Error", 500);
+		}
+	})
 );
 
 auth.post("/login", async (c) => {
-  try {
-    const { username, password } = await c.req.json();
-    console.log(username, password);
+	try {
+		const { username, password } = await c.req.json();
 
-    if (!username || !password) {
-      return c.json(
-        {
-          message: "Missing username or password",
-        },
-        400
-      );
-    }
+		if (!username || !password) {
+			return c.json(
+				{
+					message: "Missing username or password",
+				},
+				400
+			);
+		}
 
-    const query = db.query("SELECT * FROM users WHERE username = $username;");
-    const user = query.get(username) as DbUser | null;
+		const users = await db
+			.select()
+			.from(user)
+			.where(eq(user.username, username));
 
-    if (!user) {
-      return c.json(
-        {
-          message: "Invalid username or password",
-        },
-        400
-      );
-    }
+		if (users.length === 0) {
+			return c.json(
+				{
+					message: "Invalid username or password",
+				},
+				400
+			);
+		}
 
-    const validPassword = await Bun.password.verify(password, user.password);
-    if (!validPassword) {
-      return c.json(
-        {
-          message: "Invalid username or password",
-        },
-        400
-      );
-    }
+		const dbUser = users[0];
 
-    const payload: DecodedPayload = {
-      id: user.id,
-      username: user.username,
-    };
+		const validPassword = await Bun.password.verify(password, dbUser.password);
+		if (!validPassword) {
+			return c.json(
+				{
+					message: "Invalid username or password",
+				},
+				400
+			);
+		}
 
-    const token = await sign(payload, secretKey);
+		const payload: DecodedPayload = {
+			id: dbUser.id,
+			username: dbUser.username,
+		};
 
-    await setSignedCookie(c, "access_token", token, secretKey, {
-      path: "/",
-      domain: "localhost",
-      secure: true,
-      httpOnly: true,
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 24,
-      expires: new Date(Date.now() + 60 * 60 * 24 * 1000),
-    });
+		const token = await sign(payload, secretKey);
 
-    await setCookie(c, "username", user.username);
+		await setSignedCookie(c, "access_token", token, secretKey, {
+			path: "/",
+			domain: "localhost",
+			secure: true,
+			httpOnly: true,
+			sameSite: "Strict",
+			maxAge: 60 * 60 * 24,
+			expires: new Date(Date.now() + 60 * 60 * 24 * 1000),
+		});
 
-    return c.json(
-      {
-        username,
-        id: user.id,
-      },
-      200
-    );
-  } catch (error) {
-    console.log(error);
-    return c.text("Internal Server Error", 500);
-  }
+		await setCookie(c, "username", dbUser.username);
+
+		return c.json(
+			{
+				username,
+				id: dbUser.id,
+			},
+			200
+		);
+	} catch (error) {
+		console.log(error);
+		return c.text("Internal Server Error", 500);
+	}
 });
 
 export { auth };

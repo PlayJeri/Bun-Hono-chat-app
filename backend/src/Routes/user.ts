@@ -4,8 +4,8 @@ import { ContextVariables } from "../Types";
 import { checkAccessToken } from "../Middleware/accessToken";
 import { validator } from "hono/validator";
 import { ChangePasswordSchema } from "../ValidationModels/ChangePassword";
-import { DbUser } from "../db/types";
-import { Schema } from "zod";
+import { user as userTable } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 const user = new Hono<{ Variables: ContextVariables }>();
 
@@ -22,14 +22,21 @@ user.post(
       const { currentPassword, newPassword } = parsed.data;
       const userId = c.get("decodedPayload").id;
 
-      const query = db.query("SELECT password FROM users WHERE id = $id;");
-      const user = query.get(userId) as DbUser | null;
+      const users = await db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.id, userId));
 
-      if (!user) {
+      if (users.length === 0) {
         return c.json({ message: "User not found" }, 400);
       }
 
-      const isMatch = await Bun.password.verify(currentPassword, user.password);
+      const dbUser = users[0];
+
+      const isMatch = await Bun.password.verify(
+        currentPassword,
+        dbUser.password
+      );
 
       if (!isMatch) {
         return c.json({ message: "Incorrect password" }, 400);
@@ -37,10 +44,10 @@ user.post(
 
       const hashedPassword = await Bun.password.hash(newPassword);
 
-      const update = db.query(
-        "UPDATE users SET password = $password WHERE id = $id;"
-      );
-      update.run(hashedPassword, userId);
+      await db
+        .update(userTable)
+        .set({ password: hashedPassword })
+        .where(eq(userTable.id, userId));
 
       return c.json({ message: "Password changed" });
     } catch (error) {
