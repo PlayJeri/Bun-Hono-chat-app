@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start": "ENV=integrated bun run --hot src/index.ts",
-    "dev": "ENV=dev bun run --hot src/index.ts",
+    "start": "ENV=integrated bun run --hot backend/src/index.ts",
+    "dev": "ENV=dev bun run --hot backend/src/index.ts",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate"
   },

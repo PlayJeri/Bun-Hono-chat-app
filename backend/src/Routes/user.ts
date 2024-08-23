@@ -7,11 +7,10 @@ import { ChangePasswordSchema } from "../ValidationModels/ChangePassword";
 import { user as userTable } from "../db/schema";
 import { eq } from "drizzle-orm";
 
-const user = new Hono<{ Variables: ContextVariables }>();
+const user = new Hono<{ Variables: ContextVariables }>()
+.use(checkAccessToken)
 
-user.use(checkAccessToken);
-
-const userRoute = user.post(
+.post(
 	"/change-password",
 	validator("json", async (value, c) => {
 		try {
@@ -57,5 +56,4 @@ const userRoute = user.post(
 	})
 );
 
-type UserRoute = typeof userRoute;
-export { UserRoute };
+export { user };

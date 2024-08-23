@@ -1,2 +1,9 @@
-/.DS_Store
-/.vscode
+node_modules/
+build/
+chat.db
+.vscode/
+.env
+drizzle/
+bun.lockb
+.DS_Store
+frontend/bun.lockb

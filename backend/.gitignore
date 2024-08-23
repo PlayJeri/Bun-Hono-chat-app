@@ -1,7 +1,0 @@
-node_modules/
-build/
-chat.db
-.vscode/
-.env
-drizzle/
-bun.lockb

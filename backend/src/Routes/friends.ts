@@ -6,11 +6,10 @@ import { contact, user } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { currentUsersMap } from "../Ws/currentUsers";
 
-const friends = new Hono<{ Variables: ContextVariables }>();
+const friends = new Hono<{ Variables: ContextVariables }>()
+.use(checkAccessToken)
 
-friends.use(checkAccessToken);
-
-friends.get("/online", async (c) => {
+.get("/online", async (c) => {
 	try {
 		const userId = c.get("decodedPayload").id;
 		const onlineContacts: { username: string; id: number }[] = [];
@@ -34,9 +33,9 @@ friends.get("/online", async (c) => {
 		console.error("Get online friends error: ", error);
 		return c.json({ message: "Internal server error" }, 500);
 	}
-});
+})
 
-friends.post("/add", async (c) => {
+.post("/add", async (c) => {
 	try {
 		const { friendId } = await c.req.json();
 		const userId = c.get("decodedPayload").id;

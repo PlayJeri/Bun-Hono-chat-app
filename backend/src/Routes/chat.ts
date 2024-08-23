@@ -10,11 +10,9 @@ import { conversationMember, message, user } from "../db/schema";
 import { desc, eq } from "drizzle-orm";
 import { createConversation } from "../Ws/messageHandlers";
 
-const chat = new Hono<{ Variables: ContextVariables }>();
-
-chat.use(checkAccessToken);
-
-chat.post(
+const chat = new Hono<{ Variables: ContextVariables }>()
+.use(checkAccessToken)
+.post(
 	"/history",
 	validator("json", async (value, c) => {
 		try {
@@ -42,9 +40,9 @@ chat.post(
 			return c.json({ message: "Internal Server Error!!" }, 500);
 		}
 	})
-);
+)
 
-chat.post("/create", async (c) => {
+.post("/create", async (c) => {
 	try {
 		const { chatName } = await c.req.json();
 		const newChatId = await createConversation(chatName);
@@ -54,9 +52,9 @@ chat.post("/create", async (c) => {
 		console.error(error);
 		return c.json({ message: "Internal Server Error!" }, 500);
 	}
-});
+})
 
-chat.post("/join", async (c) => {
+.post("/join", async (c) => {
 	try {
 		const { chatId } = await c.req.json();
 		const { id } = c.get("decodedPayload");

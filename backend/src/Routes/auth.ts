@@ -12,9 +12,8 @@ import { eq } from "drizzle-orm";
 
 const secretKey = process.env.TOKEN_SECRET || "secret";
 
-const auth = new Hono();
-
-auth.post(
+const auth = new Hono()
+.post(
 	"/register",
 	validator("json", async (value, c) => {
 		try {
@@ -31,12 +30,7 @@ auth.post(
 				.where(eq(user.username, username));
 
 			if (users.length !== 0) {
-				return c.json(
-					{
-						message: "Username already exists",
-					},
-					400
-				);
+				return c.json({ message: "Username already exists" }, 400);
 			}
 
 			const hashedPassword = await Bun.password.hash(password);
@@ -45,29 +39,18 @@ auth.post(
 				.insert(user)
 				.values({ username: username, password: hashedPassword });
 
-			return c.json(
-				{
-					message: `Registered! ${username}`,
-				},
-				201
-			);
+			return c.json({ message: `Registered! ${username}` }, 201);
 		} catch (error) {
 			return c.text("Internal Server Error", 500);
 		}
 	})
-);
+)
 
-auth.post("/login", async (c) => {
+.post("/login", async (c) => {
 	try {
 		const { username, password } = await c.req.json();
-
 		if (!username || !password) {
-			return c.json(
-				{
-					message: "Missing username or password",
-				},
-				400
-			);
+			return c.json({ message: "Missing username or password" }, 400);
 		}
 
 		const users = await db
@@ -76,24 +59,14 @@ auth.post("/login", async (c) => {
 			.where(eq(user.username, username));
 
 		if (users.length === 0) {
-			return c.json(
-				{
-					message: "Invalid username or password",
-				},
-				400
-			);
+			return c.json({ message: "Invalid username or password" }, 400);
 		}
 
 		const dbUser = users[0];
 
 		const validPassword = await Bun.password.verify(password, dbUser.password);
 		if (!validPassword) {
-			return c.json(
-				{
-					message: "Invalid username or password",
-				},
-				400
-			);
+			return c.json({ message: "Invalid username or password" }, 400);
 		}
 
 		const payload: DecodedPayload = {
@@ -115,13 +88,7 @@ auth.post("/login", async (c) => {
 
 		await setCookie(c, "username", dbUser.username);
 
-		return c.json(
-			{
-				username,
-				id: dbUser.id,
-			},
-			200
-		);
+		return c.json({ username: dbUser.username, id: dbUser.id }, 200);
 	} catch (error) {
 		console.log(error);
 		return c.text("Internal Server Error", 500);

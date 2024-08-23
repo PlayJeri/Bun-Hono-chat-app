@@ -1,9 +1,10 @@
 import { ReactNode, createContext, useState } from "react";
-import { loginUser } from "../helpers/authProvider";
+// import { loginUser } from "../helpers/authProvider";
+import { logInUser } from "@/lib/app";
 
 interface User {
 	username: string;
-	id: string;
+	id: number;
 }
 
 export interface UserAuth {
@@ -21,12 +22,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const login = async (username: string, password: string) => {
 		console.log("Log in");
 		try {
-			const data = await loginUser(username, password);
+			// const data = await logInUser(username, password);
+			const data = await logInUser();
 			if (!data) {
 				return;
 			}
 			setUser(data);
 			console.log(data);
+			return data;
 		} catch (error) {
 			console.error("Login error:", error);
 		}

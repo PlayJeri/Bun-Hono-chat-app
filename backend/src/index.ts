@@ -22,19 +22,19 @@ app.use(
 	})
 );
 
-app.use(async (c, next) => {
-	console.log("middleware enter");
-	const start = Date.now();
-	await next();
-	const end = Date.now();
-	console.log(`middleware end. It took ${end - start} ms`);
-});
+// app.use(async (c, next) => {
+// 	console.log("middleware enter");
+// 	const start = Date.now();
+// 	await next();
+// 	const end = Date.now();
+// 	console.log(`middleware end. It took ${end - start} ms`);
+// });
 
 app.get("/", async (c) => {
 	return c.json(c.req);
 });
 
-const apiRoutes = app
+const routes = app
 	.route("/auth", auth)
 	.route("/friends", friends)
 	.route("/chat", chat);
@@ -59,5 +59,5 @@ const server = Bun.serve<WebSocketData>({
 	websocket: websocket,
 });
 
-export type ApiRoutes = typeof apiRoutes;
 export { server };
+export type AppRoutes = typeof routes;
