@@ -7,7 +7,6 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { chat } from "./Routes/chat";
 import { prettyJSON } from "hono/pretty-json";
-
 import { websocket } from "./Ws/ws";
 import { handleWsUpgrade } from "./Ws/upgradeHandler";
 
@@ -35,9 +34,10 @@ app.get("/", async (c) => {
 	return c.json(c.req);
 });
 
-app.route("/auth", auth);
-app.route("/friends", friends);
-app.route("/chat", chat);
+const apiRoutes = app
+	.route("/auth", auth)
+	.route("/friends", friends)
+	.route("/chat", chat);
 
 app.get("/protected", checkAccessToken, async (c) => {
 	console.log("Protected route");
@@ -59,4 +59,5 @@ const server = Bun.serve<WebSocketData>({
 	websocket: websocket,
 });
 
+export type ApiRoutes = typeof apiRoutes;
 export { server };
