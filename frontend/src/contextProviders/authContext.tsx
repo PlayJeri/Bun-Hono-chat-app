@@ -12,6 +12,7 @@ export interface UserAuth {
 	isLoggedIn: () => boolean;
 	login: (username: string, password: string) => Promise<void>;
 	logout: () => void;
+	register: (username: string, password: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<UserAuth | undefined>(undefined);
@@ -23,17 +24,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		console.log("Log in");
 		try {
 			// const data = await logInUser(username, password);
-			const data = await logInUser();
+			const data = await logInUser(username, password);
 			if (!data) {
 				return;
 			}
 			setUser(data);
 			console.log(data);
-			return data;
 		} catch (error) {
 			console.error("Login error:", error);
 		}
 	};
+
+	const register = async (username: string, password: string) => {
+		console.log(username, password);
+	}
 
 	const logout = () => {
 		console.log("Log out");
@@ -49,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		login,
 		logout,
 		isLoggedIn,
+		register,
 	};
 
 	return (

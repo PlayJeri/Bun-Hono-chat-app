@@ -1,12 +1,11 @@
-import { hc } from "hono/client";
+import { hc } from "hono/client"
 import { AppRoutes } from "@backend/src/index"
 
 const client = hc<AppRoutes>("http://localhost:3000");
 
 
-export async function logInUser() {
-	// const res = await client.auth.login.$post(form: { username: "IsoMies", password: "isomolc" });
-	const res = await client.auth.login.$post({ json: { username: "IsoMies", password: "isomolc" }});
+export async function logInUser(username: string, password: string) {
+	const res = await client.auth.login.$post({ json: { username, password }});
 	console.log(res);
 	console.log(res.json())
 	console.log(res.body)
