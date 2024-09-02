@@ -8,6 +8,7 @@ const environment = process.env.ENV;
 async function checkAccessToken(c: Context, next: Next) {
 	try {
 		if (c.req.header("upgrade") && environment === "dev") {
+			console.log("JEE");
 			const username = c.req.header("username");
 			const userId = c.req.header("userId");
 			c.set("decodedPayload", { username, id: userId });

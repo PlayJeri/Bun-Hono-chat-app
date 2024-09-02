@@ -1,57 +1,41 @@
-import { useState } from "react";
+import { useAuth } from "@/contextProviders/useAuthContext";
+import { getConversations } from "@/lib/app";
+import { useEffect, useState } from "react";
 
 type Conversation = {
 	id: string;
 	name: string;
-	lastMessage: string;
+	latestMessage: string;
 	time: string;
 	unread: number;
 };
 
-const conversations: Conversation[] = [
-	{
-		id: "1",
-		name: "ISOT",
-		lastMessage: "Hey, how's it going?",
-		time: "2m",
-		unread: 1,
-	},
-	{
-		id: "2",
-		name: "BIG BOYS CHAT",
-		lastMessage: "Can we reschedule?",
-		time: "1h",
-		unread: 0,
-	},
-	{
-		id: "3",
-		name: "VITTU JEEJOO POLKUPYERE",
-		lastMessage: "Thanks for your help!",
-		time: "2h",
-		unread: 2,
-	},
-	{
-		id: "4",
-		name: "testi jeejoo",
-		lastMessage: "See you tomorrow!",
-		time: "1d",
-		unread: 0,
-	},
-	{
-		id: "5",
-		name: "juuh elikkes",
-		lastMessage: "Mission accomplished",
-		time: "2d",
-		unread: 0,
-	},
-];
+type ChatData = {
+	chatName: string;
+	id: string;
+	latestMessage: string | null;
+};
 
 export const SideBar = () => {
 	const [searchTerm, setSearchTerm] = useState("");
+	const [chats, setChats] = useState<ChatData[]>([]);
+	const { isLoggedIn } = useAuth();
+
+	async function getData() {
+		const res = await getConversations();
+		console.log(res);
+		setChats(res);
+	}
+
+	useEffect(() => {
+		if (isLoggedIn) {
+			getData();
+		}
+	}, [isLoggedIn]);
 
 	// FOR TESTING
-	const filteredConversations = conversations.filter((conv) =>
-		conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+	const filteredChats = chats.filter((chat) =>
+		chat.chatName.toLowerCase().includes(searchTerm.toLowerCase())
 	);
 
 	return (
@@ -66,28 +50,28 @@ export const SideBar = () => {
 				/>
 			</div>
 			<div className="flex-1 px-2 overflow-y-auto">
-				{filteredConversations.map((conversation) => (
+				{filteredChats.map((conversation) => (
 					<button
 						key={conversation.id}
-						className={`w-full text-left mb-1 p-2 rounded-lg hover:bg-gray-800 transition-colors ${
-							conversation.unread > 0 ? "bg-gray-800" : ""
-						}`}
+						// className={`w-full text-left mb-1 p-2 rounded-lg hover:bg-gray-800 transition-colors ${
+						// 	conversation.unread > 0 ? "bg-gray-800" : ""
+						// }`}
 					>
 						<div className="flex items-center justify-between overflow-hidden">
 							<span className="pr-2 font-semibold truncate">
-								{conversation.name}
+								{conversation.chatName}
 							</span>
-							<span className="text-xs text-gray-500">{conversation.time}</span>
+							{/* <span className="text-xs text-gray-500">{conversation.time}</span> */}
 						</div>
 						<div className="flex items-center justify-between mt-1">
 							<span className="text-sm text-gray-400 truncate">
-								{conversation.lastMessage}
+								{conversation.latestMessage}
 							</span>
-							{conversation.unread > 0 && (
+							{/* {conversation.unread > 0 && (
 								<span className="flex items-center justify-center w-5 h-5 text-xs text-white bg-purple-600 rounded-full">
 									{conversation.unread}
 								</span>
-							)}
+							)} */}
 						</div>
 					</button>
 				))}

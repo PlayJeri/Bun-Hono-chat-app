@@ -5,7 +5,7 @@ import {
 	WebSocketMsg,
 } from "../Types";
 import { ServerWebSocket, WebSocketHandler } from "bun";
-import { subscribeToConversations } from "./messageHandlers";
+import { insertMsgToDb, subscribeToConversations } from "./messageHandlers";
 import { server } from "..";
 import { currentUsersMap } from "./currentUsers";
 
@@ -27,7 +27,7 @@ export const websocket: WebSocketHandler<WebSocketData> = {
 	},
 };
 
-function wsMessageHandler(
+async function wsMessageHandler(
 	ws: ServerWebSocket<WebSocketData>,
 	message: string | Buffer
 ) {
@@ -36,10 +36,11 @@ function wsMessageHandler(
 
 		switch (msg.type) {
 			case "conversation_message":
-				const { conversationId, message } =
+				const { conversationId, message, senderId } =
 					msg.payload as ConversationMessagePayload;
 
 				server.publish(conversationId, message);
+				await insertMsgToDb(conversationId, senderId, message);
 				break;
 			case "subscribe_to_conversation":
 				const subPayload = msg.payload as SubscribeToConversationPayload;

@@ -19,28 +19,28 @@ export const LoginForm = () => {
 				onSubmit={handleSubmit}
 			>
 				<div className="flex flex-col">
-					<label className="text-gray-300" htmlFor="username">
+					<label className="text-gray-300" htmlFor="login-username">
 						Username
 					</label>
 					<input
 						className="p-2 text-lg text-gray-100 placeholder-gray-500 bg-gray-800 border-gray-700 rounded-md"
 						placeholder="Enter your username"
 						type="text"
-						id="username"
+						id="login-username"
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
 						required
 					/>
 				</div>
 				<div className="flex flex-col">
-					<label className="text-gray-300" htmlFor="password">
+					<label className="text-gray-300" htmlFor="login-password">
 						Password
 					</label>
 					<input
 						className="p-2 text-lg text-gray-100 placeholder-gray-500 bg-gray-800 border-gray-700 rounded-md"
 						placeholder="Enter your password"
 						type="password"
-						id="username"
+						id="login-password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required

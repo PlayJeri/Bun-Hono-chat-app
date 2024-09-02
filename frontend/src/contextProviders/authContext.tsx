@@ -9,7 +9,7 @@ interface User {
 
 export interface UserAuth {
 	user: User | undefined;
-	isLoggedIn: () => boolean;
+	isLoggedIn: boolean;
 	login: (username: string, password: string) => Promise<void>;
 	logout: () => void;
 	register: (username: string, password: string) => Promise<void>;
@@ -19,16 +19,17 @@ export const AuthContext = createContext<UserAuth | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const [user, setUser] = useState<User | undefined>(undefined);
+	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
 	const login = async (username: string, password: string) => {
 		console.log("Log in");
 		try {
-			// const data = await logInUser(username, password);
 			const data = await logInUser(username, password);
 			if (!data) {
 				return;
 			}
 			setUser(data);
+			setIsLoggedIn(true);
 			console.log(data);
 		} catch (error) {
 			console.error("Login error:", error);
@@ -37,15 +38,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 	const register = async (username: string, password: string) => {
 		console.log(username, password);
-	}
+	};
 
 	const logout = () => {
 		console.log("Log out");
 		setUser(undefined);
-	};
-
-	const isLoggedIn = () => {
-		return user !== undefined;
+		setIsLoggedIn(false);
 	};
 
 	const contextValue = {

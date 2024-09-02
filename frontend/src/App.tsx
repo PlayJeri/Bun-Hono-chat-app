@@ -14,7 +14,7 @@ function App() {
 
 				{/* Main area */}
 				<div className="flex flex-col w-full h-screen bg-gray-800">
-					{authProvider.isLoggedIn() ? <ChatSection /> : <LoginPage />}
+					{authProvider.isLoggedIn ? <ChatSection /> : <LoginPage />}
 				</div>
 			</div>
 		</>

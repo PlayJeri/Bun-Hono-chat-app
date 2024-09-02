@@ -51,6 +51,7 @@ app.get("/protected", checkAccessToken, async (c) => {
 const server = Bun.serve<WebSocketData>({
 	fetch: async (req, server) => {
 		if (req.headers.get("upgrade") === "websocket") {
+			console.log("JOU");
 			await handleWsUpgrade(req, server);
 		} else {
 			return app.fetch(req);
