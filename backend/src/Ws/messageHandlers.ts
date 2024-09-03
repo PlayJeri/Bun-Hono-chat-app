@@ -50,4 +50,6 @@ export async function insertMsgToDb(
 		.returning();
 
 	if (success.length === 0) throw new Error("Chat message insert to db failed");
+
+	return success[0];
 }

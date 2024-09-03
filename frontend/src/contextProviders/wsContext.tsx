@@ -1,9 +1,10 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 import { useAuth } from "./useAuthContext";
+import { WebSocketMsg } from "@backend/src/Types";
 
 export interface wsContext {
 	ws: WebSocket | undefined;
-	sendMessage: (message: string) => void;
+	sendMessage: (message: WebSocketMsg) => void;
 }
 
 export const WebSocketContext = createContext<wsContext | undefined>(undefined);
@@ -14,7 +15,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
 	useEffect(() => {
 		console.log("WS ctx provider run");
-		if (!authContext.isLoggedIn()) return;
+		if (!authContext.isLoggedIn) return;
 		const socket = new WebSocket("ws://localhost:3000");
 
 		socket.onopen = () => {
@@ -40,9 +41,9 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 		};
 	}, [authContext]);
 
-	const sendMessage = (message: string) => {
+	const sendMessage = (message: WebSocketMsg) => {
 		if (ws && ws.readyState === WebSocket.OPEN) {
-			ws.send(message);
+			ws.send(JSON.stringify(message));
 		} else {
 			console.error("WebSocket is not open");
 		}

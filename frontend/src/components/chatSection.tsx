@@ -1,9 +1,10 @@
 import { ChatHeader } from "./chatHeader";
 import { MessageSection } from "./messageSection";
 import { MessageInputSection } from "./messageInputSection";
-import { ChatData, ChatMessageHistory } from "@/types";
+import { ChatData, ChatMessage } from "@/types";
 import { getChatHistory, getChatMembers } from "@/lib/app";
 import { useEffect, useState } from "react";
+import { useWebSocket } from "@/contextProviders/useWsContext";
 
 type ChatSectionProps = {
 	chatData: ChatData | null;
@@ -11,7 +12,21 @@ type ChatSectionProps = {
 
 export const ChatSection: React.FC<ChatSectionProps> = ({ chatData }) => {
 	const [members, setMembers] = useState<string[]>([]);
-	const [messages, setMessages] = useState<ChatMessageHistory[]>([]);
+	const [messages, setMessages] = useState<ChatMessage[]>([]);
+	const { ws } = useWebSocket();
+
+	if (ws !== undefined) {
+		ws.onmessage = (event) => {
+			const { message, id, createdAt, senderUsername } = JSON.parse(event.data);
+			const newMessage: ChatMessage = {
+				message,
+				id,
+				sender: senderUsername,
+				time: createdAt,
+			};
+			setMessages((prevMessages) => [...prevMessages, newMessage]);
+		};
+	}
 
 	useEffect(() => {
 		async function fetchMembers() {
@@ -43,7 +58,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ chatData }) => {
 			<MessageSection messages={messages} />
 
 			{/* Message input */}
-			<MessageInputSection />
+			<MessageInputSection chatId={chatData?.id} />
 		</>
 	);
 };

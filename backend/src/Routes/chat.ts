@@ -2,12 +2,9 @@ import { checkAccessToken } from "../Middleware/accessToken";
 import { Hono } from "hono";
 import { ContextVariables } from "../Types";
 import { db } from "../db/database";
-import { getMessagesFromDb } from "../db/wsMessages";
-import { validator } from "hono/validator";
-import { RegisterSchema } from "../ValidationModels/Register";
 import { ChatHistoryReqSchema } from "../ValidationModels/ChatHistoryRequest";
 import { conversation, conversationMember, message, user } from "../db/schema";
-import { desc, eq, and, max, sql } from "drizzle-orm";
+import { eq, and, sql, asc } from "drizzle-orm";
 import { createConversation } from "../Ws/messageHandlers";
 import { zValidator } from "@hono/zod-validator";
 
@@ -22,7 +19,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 				.from(message)
 				.leftJoin(user, eq(message.userId, user.id))
 				.where(eq(message.conversationId, conversationId))
-				.orderBy(desc(message.createdAt))
+				.orderBy(asc(message.createdAt))
 				.limit(+limit)
 				.offset(+offset);
 
@@ -115,7 +112,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 				)
 				.where(eq(conversationMember.userId, id));
 
-			console.log(chatData);
 			return c.json(chatData);
 		} catch (error) {
 			console.error("Error fetching chat data:", error);
@@ -142,11 +138,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 			console.error("Error fetching chat member data", error);
 			return c.json({ message: "Internal Server Error!" }, 500);
 		}
-	})
-
-	.get("/test", async (c) => {
-		console.log(await c.req.query("chatId"));
-		console.log("moro");
-		return c.json({});
 	});
+
 export { chat };

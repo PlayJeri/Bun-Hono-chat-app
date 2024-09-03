@@ -32,6 +32,7 @@ type ConversationMessagePayload = {
 	message: string;
 	conversationId: string;
 	senderId: number;
+	senderUsername: string;
 };
 
 type SubscribeToConversationPayload = {

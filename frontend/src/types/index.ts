@@ -4,7 +4,7 @@ export type ChatData = {
 	latestMessage?: string | null;
 };
 
-export type ChatMessageHistory = {
+export type ChatMessage = {
 	message: string;
 	id: number;
 	time: string;

@@ -12,7 +12,6 @@ import { currentUsersMap } from "./currentUsers";
 export const websocket: WebSocketHandler<WebSocketData> = {
 	open(ws) {
 		console.log("WebSocket connection opened");
-		ws.send("Welcome to the WebSocket server!");
 		const { userId, username } = ws.data;
 		subscribeToConversations(ws);
 		currentUsersMap.set(userId, { username, id: userId, ws });
@@ -36,11 +35,12 @@ async function wsMessageHandler(
 
 		switch (msg.type) {
 			case "conversation_message":
-				const { conversationId, message, senderId } =
+				const { conversationId, message, senderId, senderUsername } =
 					msg.payload as ConversationMessagePayload;
 
-				server.publish(conversationId, message);
-				await insertMsgToDb(conversationId, senderId, message);
+				const inserted = await insertMsgToDb(conversationId, senderId, message);
+				const newMessage = { ...inserted, senderUsername };
+				server.publish(conversationId, JSON.stringify(newMessage));
 				break;
 			case "subscribe_to_conversation":
 				const subPayload = msg.payload as SubscribeToConversationPayload;
