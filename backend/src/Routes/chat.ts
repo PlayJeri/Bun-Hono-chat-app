@@ -9,38 +9,36 @@ import { ChatHistoryReqSchema } from "../ValidationModels/ChatHistoryRequest";
 import { conversation, conversationMember, message, user } from "../db/schema";
 import { desc, eq, and, max, sql } from "drizzle-orm";
 import { createConversation } from "../Ws/messageHandlers";
+import { zValidator } from "@hono/zod-validator";
 
 const chat = new Hono<{ Variables: ContextVariables }>()
 	.use(checkAccessToken)
-	.post(
-		"/history",
-		validator("json", async (value, c) => {
-			try {
-				const parsed = ChatHistoryReqSchema.safeParse(value);
-				if (!parsed.success) {
-					return c.status(400);
-				}
+	.get("/history", zValidator("query", ChatHistoryReqSchema), async (c) => {
+		try {
+			const { conversationId, limit, offset } = await c.req.query();
 
-				const { conversationId, limit, offset } = parsed.data;
+			const messages = await db
+				.select({ message: message, username: user.username })
+				.from(message)
+				.leftJoin(user, eq(message.userId, user.id))
+				.where(eq(message.conversationId, conversationId))
+				.orderBy(desc(message.createdAt))
+				.limit(+limit)
+				.offset(+offset);
 
-				const messages = await db
-					.select({ message: message, username: user.username })
-					.from(message)
-					.leftJoin(user, eq(message.userId, user.id))
-					.where(eq(message.conversationId, conversationId))
-					.orderBy(desc(message.createdAt))
-					.limit(limit)
-					.offset(offset);
+			const transformedMessages = messages.map((msg) => ({
+				message: msg.message.message,
+				id: msg.message.id,
+				time: msg.message.createdAt,
+				sender: msg.username,
+			}));
 
-				console.log(messages);
-
-				return c.json(messages);
-			} catch (error) {
-				console.error(error);
-				return c.json({ message: "Internal Server Error!!" }, 500);
-			}
-		})
-	)
+			return c.json(transformedMessages);
+		} catch (error) {
+			console.error(error);
+			return c.json({ message: "Internal Server Error!!" }, 500);
+		}
+	})
 
 	.post("/create", async (c) => {
 		try {
@@ -123,6 +121,32 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 			console.error("Error fetching chat data:", error);
 			return c.json({ error });
 		}
-	});
+	})
 
+	.get("/members", async (c) => {
+		try {
+			const chatId = await c.req.query("chatId");
+			if (!chatId) {
+				return c.json({ error: "Chat id is required" }, 400);
+			}
+			const chatMembers = await db
+				.select({ username: user.username })
+				.from(conversationMember)
+				.where(eq(conversationMember.conversationId, chatId))
+				.innerJoin(user, eq(user.id, conversationMember.userId));
+
+			const usernames = chatMembers.map((user) => user.username);
+
+			return c.json(usernames);
+		} catch (error) {
+			console.error("Error fetching chat member data", error);
+			return c.json({ message: "Internal Server Error!" }, 500);
+		}
+	})
+
+	.get("/test", async (c) => {
+		console.log(await c.req.query("chatId"));
+		console.log("moro");
+		return c.json({});
+	});
 export { chat };

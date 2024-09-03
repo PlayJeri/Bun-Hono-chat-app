@@ -13,43 +13,35 @@ import { eq, sql } from "drizzle-orm";
 const secretKey = process.env.TOKEN_SECRET || "secret";
 
 const auth = new Hono()
-	.post(
-		"/register",
-		validator("json", async (value, c) => {
-			try {
-				const parsed = RegisterSchema.safeParse(value);
-				if (!parsed.success) {
-					return c.status(400);
-				}
+	.post("/register", zValidator("json", RegisterSchema), async (c) => {
+		try {
+			const { username, password } = await c.req.json();
 
-				const { username, password } = parsed.data;
+			const users = await db
+				.select()
+				.from(user)
+				.where(eq(user.username, username));
 
-				const users = await db
-					.select()
-					.from(user)
-					.where(eq(user.username, username));
-
-				if (users.length !== 0) {
-					return c.json({ message: "Username already exists" }, 400);
-				}
-
-				const hashedPassword = await Bun.password.hash(password);
-
-				await db
-					.insert(user)
-					.values({ username: username, password: hashedPassword });
-
-				return c.json({ message: `Registered! ${username}` }, 201);
-			} catch (error) {
-				return c.text("Internal Server Error", 500);
+			if (users.length !== 0) {
+				return c.json({ message: "Username already exists" }, 400);
 			}
-		})
-	)
+
+			const hashedPassword = await Bun.password.hash(password);
+
+			await db
+				.insert(user)
+				.values({ username: username, password: hashedPassword });
+
+			return c.json({ message: `Registered! ${username}` }, 201);
+		} catch (error) {
+			console.error(error);
+			return c.text("Internal Server Error", 500);
+		}
+	})
 
 	.post("/login", async (c) => {
 		try {
 			const { username, password } = await c.req.json();
-			console.log(username, password);
 			if (!username || !password) {
 				return c.json({ message: "Missing username or password" }, 400);
 			}

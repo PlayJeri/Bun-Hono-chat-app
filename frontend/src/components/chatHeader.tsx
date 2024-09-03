@@ -6,7 +6,7 @@ type ChatInformation = {
 };
 
 type ChatHeaderProps = {
-	chatInfo: ChatInformation;
+	chatInfo: ChatInformation | null;
 };
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatInfo }) => {
@@ -14,12 +14,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chatInfo }) => {
 		<header className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
 			<div>
 				<h2 className="text-xl font-semibold text-purple-300">
-					{chatInfo.chatName}
+					{chatInfo?.chatName}
 				</h2>
 				<div className="flex items-center mt-1">
 					<span className="mr-2 text-sm text-gray-400">Members:</span>
 					<div className="flex space-x-2 overflow-hidden">
-						{chatInfo.members.map((member, index) => (
+						{chatInfo?.members.map((member, index) => (
 							<div
 								key={member}
 								className={`inline-block h-6 w-full px-2 rounded-full text-center text-xs leading-6 ${

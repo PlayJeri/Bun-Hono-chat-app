@@ -11,7 +11,6 @@ const client = hc<AppRoutes>("http://localhost:3000", {
 
 export async function logInUser(username: string, password: string) {
 	const res = await client.auth.login.$post({ json: { username, password } });
-	console.log(res.body);
 	if (res.status === 200) {
 		return await res.json();
 	} else {
@@ -22,11 +21,24 @@ export async function logInUser(username: string, password: string) {
 
 export async function getConversations() {
 	const res = await client.chat.all.$get();
-	console.log(res.body);
 	if (res.status === 200) {
 		return await res.json();
 	} else {
 		console.error(res);
 		throw Error("Get conversation failed");
 	}
+}
+
+export async function getChatMembers(chatId: string) {
+	const res = await client.chat.members.$get({ query: { chatId: chatId } });
+	if (res.status !== 200) throw Error("Get chat members error");
+	return await res.json();
+}
+
+export async function getChatHistory(chatId: string) {
+	const res = await client.chat.history.$get({
+		query: { conversationId: chatId },
+	});
+	if (res.status !== 200) throw Error("Get chat history error");
+	return await res.json();
 }

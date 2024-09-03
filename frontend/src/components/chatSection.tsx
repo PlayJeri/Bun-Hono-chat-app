@@ -1,25 +1,43 @@
 import { ChatHeader } from "./chatHeader";
-import { Message, MessageSection } from "./messageSection";
+import { MessageSection } from "./messageSection";
 import { MessageInputSection } from "./messageInputSection";
+import { ChatData, ChatMessageHistory } from "@/types";
+import { getChatHistory, getChatMembers } from "@/lib/app";
+import { useEffect, useState } from "react";
 
-// Mock data
-const chatInfo = {
-	chatName: "Team Chat",
-	members: ["Alice", "Bob", "Charlie", "David"],
+type ChatSectionProps = {
+	chatData: ChatData | null;
 };
 
-const messages: Message[] = [
-	{ id: 1, sender: "Alice", text: "Hello everyone!", time: "10:00 AM" },
-	{ id: 2, sender: "Bob", text: "Hi Alice!", time: "10:05 AM" },
-	{ id: 3, sender: "Charlie", text: "Good morning!", time: "10:10 AM" },
-	{ id: 4, sender: "David", text: "Hey folks!", time: "10:15 AM" },
-];
+export const ChatSection: React.FC<ChatSectionProps> = ({ chatData }) => {
+	const [members, setMembers] = useState<string[]>([]);
+	const [messages, setMessages] = useState<ChatMessageHistory[]>([]);
 
-export const ChatSection = () => {
+	useEffect(() => {
+		async function fetchMembers() {
+			if (chatData !== null) {
+				const members = await getChatMembers(chatData.id);
+				setMembers(members);
+			}
+		}
+
+		async function fetchChatHistory() {
+			if (chatData !== null) {
+				const history = await getChatHistory(chatData.id);
+				setMessages(history);
+			}
+		}
+
+		fetchMembers();
+		fetchChatHistory();
+	}, [chatData]);
+
+	const chatHeaderInfo = { chatName: chatData?.chatName ?? "", members };
+
 	return (
 		<>
 			{/* Chat info */}
-			<ChatHeader chatInfo={chatInfo} />
+			<ChatHeader chatInfo={chatHeaderInfo} />
 
 			{/* Message section */}
 			<MessageSection messages={messages} />

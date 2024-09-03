@@ -1,22 +1,13 @@
 import { useAuth } from "@/contextProviders/useAuthContext";
 import { getConversations } from "@/lib/app";
+import { ChatData } from "@/types";
 import { useEffect, useState } from "react";
 
-type Conversation = {
-	id: string;
-	name: string;
-	latestMessage: string;
-	time: string;
-	unread: number;
+type SideBarProps = {
+	onSelectChat: (chatData: ChatData) => void;
 };
 
-type ChatData = {
-	chatName: string;
-	id: string;
-	latestMessage: string | null;
-};
-
-export const SideBar = () => {
+export const SideBar: React.FC<SideBarProps> = ({ onSelectChat }) => {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [chats, setChats] = useState<ChatData[]>([]);
 	const { isLoggedIn } = useAuth();
@@ -33,7 +24,6 @@ export const SideBar = () => {
 		}
 	}, [isLoggedIn]);
 
-	// FOR TESTING
 	const filteredChats = chats.filter((chat) =>
 		chat.chatName.toLowerCase().includes(searchTerm.toLowerCase())
 	);
@@ -50,26 +40,29 @@ export const SideBar = () => {
 				/>
 			</div>
 			<div className="flex-1 px-2 overflow-y-auto">
-				{filteredChats.map((conversation) => (
+				{filteredChats.map((chat) => (
 					<button
-						key={conversation.id}
+						key={chat.id}
+						onClick={() =>
+							onSelectChat({ chatName: chat.chatName, id: chat.id })
+						}
 						// className={`w-full text-left mb-1 p-2 rounded-lg hover:bg-gray-800 transition-colors ${
-						// 	conversation.unread > 0 ? "bg-gray-800" : ""
+						// 	chat.unread > 0 ? "bg-gray-800" : ""
 						// }`}
 					>
 						<div className="flex items-center justify-between overflow-hidden">
 							<span className="pr-2 font-semibold truncate">
-								{conversation.chatName}
+								{chat.chatName}
 							</span>
-							{/* <span className="text-xs text-gray-500">{conversation.time}</span> */}
+							{/* <span className="text-xs text-gray-500">{chat.time}</span> */}
 						</div>
 						<div className="flex items-center justify-between mt-1">
 							<span className="text-sm text-gray-400 truncate">
-								{conversation.latestMessage}
+								{chat.latestMessage}
 							</span>
-							{/* {conversation.unread > 0 && (
+							{/* {chat.unread > 0 && (
 								<span className="flex items-center justify-center w-5 h-5 text-xs text-white bg-purple-600 rounded-full">
-									{conversation.unread}
+									{chat.unread}
 								</span>
 							)} */}
 						</div>
